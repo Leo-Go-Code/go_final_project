@@ -1,0 +1,100 @@
+package api
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"time"
+
+	"example.com/m/pkg/db"
+)
+
+func addTask(w http.ResponseWriter, r *http.Request) {
+	//	0.	Объявляем db.Task для запонения и вывода
+	var task db.Task
+	var empty struct{}
+
+	//	1. Десериализуем JSON из запроса в переменную task
+	err := json.NewDecoder(r.Body).Decode(&task)
+	if err != nil {
+		writeJSON(w, empty, err)
+		return
+	}
+
+	//	2. Проверка task.Title != ""
+	if task.Title == "" {
+		writeJSON(w, empty, fmt.Errorf("поле 'Задача' обязательно должно быть заполнено"))
+		return
+	}
+
+	//	3.  Проверка task на корректность (можно спустить только нужные строки, а не весь task *db.Task)
+	err = checkDateTask(&task)
+	if err != nil {
+		writeJSON(w, empty, fmt.Errorf("поле 'Дата' заполнено НЕ корректно: %v", err))
+		return
+	}
+
+	//	4. Добавляем задачу в БД
+	id, err := db.AddData(&task)
+	if err != nil {
+		writeJSON(w, empty, fmt.Errorf("ошибка при добавлении записи в базу данных: %v", err))
+		return
+	}
+
+	//	5. Проверка id
+	if id == 0 {
+		writeJSON(w, empty, fmt.Errorf("получено НЕ корректное значение id"))
+		return
+	}
+
+	//	6. 	Возвращаем id добавленной в БД задачи в виде JSON
+	resp := map[string]interface{}{
+		"id": id,
+	}
+	writeJSON(w, resp, err)
+}
+
+func checkDateTask(task *db.Task) error {
+	//	0. Для пустого task.Date присвоим текущее время
+	nowTime := time.Now()
+	nowStr := nowTime.Format(formatDate)
+	if task.Date == "" {
+		task.Date = nowStr
+		return nil
+	}
+
+	//	1. Проверяем данные
+	err = CheckDstartNow(nowStr)
+	if err != nil {
+		err = fmt.Errorf(`ошибка при проверке корректности строки now: %v`, err)
+		return err
+	}
+	err = CheckDstartNow(task.Date)
+	if err != nil {
+		err = fmt.Errorf(`ошибка при проверке корректности строки dstart: %v`, err)
+		return err
+	}
+	if task.Repeat != "" {
+		err = CheckRepeat(task.Repeat)
+		if err != nil {
+			err = fmt.Errorf(`ошибка при проверке корректности строки repeat: %v`, err)
+			return err
+		}
+	}
+
+	//	2.	Если дата меньше сегодняшнего дня и повтор НЕ задан
+	if task.Date < nowStr {
+		if task.Repeat == "" {
+			task.Date = nowStr
+		} else {
+			//	3.	Если дата меньше сегодняшнего дня и повтор ЗАДАН
+			next, err := taskDate(nowStr, task.Date, task.Repeat)
+			if err != nil {
+				task.Date = nowStr
+			} else {
+				task.Date = next
+			}
+		}
+	}
+	return nil
+}
