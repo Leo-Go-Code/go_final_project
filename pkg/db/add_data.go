@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
 
 	_ "modernc.org/sqlite"
@@ -18,16 +17,9 @@ type Task struct {
 func AddData(task *Task) (int64, error) {
 	var id int64
 
-	//	0.	Открываем файл базы данных
-	db, err := sql.Open("sqlite", "pkg/db/scheduler.db")
-	if err != nil {
-		return 0, fmt.Errorf("ошибка открытия базы данных: %v", err)
-	}
-	defer db.Close()
-
 	//	1.	Выполняем запрос в БД: добавляем задачу
 	query := "INSERT INTO scheduler (date, title, comment, repeat) VALUES ($1, $2, $3, $4);"
-	res, err := db.Exec(query, task.Date, task.Title, task.Comment, task.Repeat)
+	res, err := DB.Exec(query, task.Date, task.Title, task.Comment, task.Repeat)
 	if err != nil {
 		return 0, fmt.Errorf("ошибка запроса к базе данных: %v", err)
 	}

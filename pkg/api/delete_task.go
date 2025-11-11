@@ -22,6 +22,7 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 	} else {
 		err := json.NewDecoder(r.Body).Decode(&task)
 		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
 			writeJSON(w, empty, err)
 			return
 		}
@@ -29,6 +30,7 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 
 	//	2.	Проверка ID
 	if task.ID == "" {
+		w.WriteHeader(http.StatusBadRequest)
 		writeJSON(w, empty, fmt.Errorf("в запросе НЕ был получен ID"))
 		return
 	}
@@ -42,11 +44,17 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if len(task.ID) != n {
+		w.WriteHeader(http.StatusBadRequest)
 		writeJSON(w, empty, fmt.Errorf("получено не корректное значение ID"))
 		return
 	}
 
 	//	3.	Удаляем из БД задачу по ID
 	err = db.DeleteData(task.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		writeJSON(w, empty, fmt.Errorf("в БД не найдена задача с указанным ID: %v", err))
+		return
+	}
 	writeJSON(w, empty, err)
 }

@@ -57,25 +57,25 @@ func addTask(w http.ResponseWriter, r *http.Request) {
 func checkDateTask(task *db.Task) error {
 	//	0. Для пустого task.Date присвоим текущее время
 	nowTime := time.Now()
-	nowStr := nowTime.Format(formatDate)
+	nowStr := nowTime.Format(FORMAT_DATE)
 	if task.Date == "" {
 		task.Date = nowStr
 		return nil
 	}
 
 	//	1. Проверяем данные
-	err = CheckDstartNow(nowStr)
+	err = checkDstartNow(nowStr)
 	if err != nil {
 		err = fmt.Errorf(`ошибка при проверке корректности строки now: %v`, err)
 		return err
 	}
-	err = CheckDstartNow(task.Date)
+	err = checkDstartNow(task.Date)
 	if err != nil {
 		err = fmt.Errorf(`ошибка при проверке корректности строки dstart: %v`, err)
 		return err
 	}
 	if task.Repeat != "" {
-		err = CheckRepeat(task.Repeat)
+		err = checkRepeat(task.Repeat)
 		if err != nil {
 			err = fmt.Errorf(`ошибка при проверке корректности строки repeat: %v`, err)
 			return err

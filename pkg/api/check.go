@@ -7,7 +7,7 @@ import (
 )
 
 // Проверка корректности строк now и dstart
-func CheckDstartNow(str string) error {
+func checkDstartNow(str string) error {
 	//	0.	Инициируем переменную для проверки
 	numbersBytes := []byte("0123456789")
 
@@ -56,7 +56,7 @@ func CheckDstartNow(str string) error {
 	}
 
 	//	7. Дополнительная проверка через Parse
-	_, err = time.Parse(formatDate, str)
+	_, err = time.Parse(FORMAT_DATE, str)
 	if err != nil {
 		return fmt.Errorf("строка str задана некорректно: она не парсится под формат времени 20060102")
 	}
@@ -65,7 +65,7 @@ func CheckDstartNow(str string) error {
 }
 
 // проверка корректности строки repeat
-func CheckRepeat(repeat string) error {
+func checkRepeat(repeat string) error {
 	//	0.	Инициируем переменные для проверки
 	lettersBytes := []byte("ydwm")
 	numbersBytes := []byte("0123456789")

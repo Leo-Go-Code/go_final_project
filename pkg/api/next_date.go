@@ -12,7 +12,7 @@ var result = ""
 var err error
 
 // задаём формат времени YYYYMMDD
-const formatDate = "20060102"
+const FORMAT_DATE = "20060102"
 
 func nextDate(w http.ResponseWriter, r *http.Request) {
 	//	0.	Обрезаем URL
@@ -34,6 +34,7 @@ func nextDate(w http.ResponseWriter, r *http.Request) {
 	//	проверка данных, определение добавляемого кол-ва дней, определение новой даты
 	result, err := taskDate(now, date, repeat)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		writeJSON(w, nil, fmt.Errorf(`pkg/api/nextdate.go вернул ошибку: %v`, err))
 		return
 	}
@@ -48,15 +49,15 @@ func nextDate(w http.ResponseWriter, r *http.Request) {
 
 func taskDate(now, date, repeat string) (string, error) {
 	//	0.	Проверка корректности строк now, dstart, repeat
-	err = CheckDstartNow(now)
+	err = checkDstartNow(now)
 	if err != nil {
 		return "", fmt.Errorf(`ошибка при проверке корректности строки now: %v`, err)
 	}
-	err = CheckDstartNow(date)
+	err = checkDstartNow(date)
 	if err != nil {
 		return "", fmt.Errorf(`ошибка при проверке корректности строки date: %v`, err)
 	}
-	err = CheckRepeat(repeat)
+	err = checkRepeat(repeat)
 	if err != nil {
 		return "", fmt.Errorf(`ошибка при проверке корректности строки repeat: %v`, err)
 	}
@@ -87,13 +88,13 @@ func taskDate(now, date, repeat string) (string, error) {
 	if year == 0 && days == 0 {
 		result := ""
 		if repeat[0] == lettersBytes[2] { //	WEEK
-			result, err = Week(now, date, repeat)
+			result, err = week(now, date, repeat)
 			if err != nil {
 				return "", err
 			}
 		}
 		if repeat[0] == lettersBytes[3] { //	MONTH
-			result, err = Month(now, date, repeat)
+			result, err = month(now, date, repeat)
 			if err != nil {
 				return "", err
 			}
@@ -112,11 +113,11 @@ func taskDate(now, date, repeat string) (string, error) {
 
 func resultDaysYear(now, dstart string, days, year int) (string, error) {
 	//	0.	Преобразуем now, dstart в формат time.Time
-	nowTime, err := time.Parse(formatDate, now)
+	nowTime, err := time.Parse(FORMAT_DATE, now)
 	if err != nil {
 		return "", fmt.Errorf("ошибка парсинга исходной даты now")
 	}
-	dateStart, err := time.Parse(formatDate, dstart)
+	dateStart, err := time.Parse(FORMAT_DATE, dstart)
 	if err != nil {
 		return "", fmt.Errorf("ошибка парсинга исходной даты dstart")
 	}
@@ -131,5 +132,5 @@ func resultDaysYear(now, dstart string, days, year int) (string, error) {
 		}
 	}
 
-	return workDate.Format(formatDate), err
+	return workDate.Format(FORMAT_DATE), err
 }

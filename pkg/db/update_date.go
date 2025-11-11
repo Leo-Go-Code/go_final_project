@@ -1,21 +1,14 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
 )
 
-func DoneData(id, date string) error {
-	//	0.	Открываем файл базы данных
-	db, err := sql.Open("sqlite", "pkg/db/scheduler.db")
-	if err != nil {
-		return fmt.Errorf("ошибка открытия базы данных: %v", err)
-	}
-	defer db.Close()
+func UpdateDate(id, date string) error {
 
 	//	1.	Делаем запрос в БД
 	query := `UPDATE scheduler SET date = $1 WHERE id = $2;`
-	res, err := db.Exec(query, date, id)
+	res, err := DB.Exec(query, date, id)
 	if err != nil {
 		return fmt.Errorf("ошибка запроса к базе данных: %v", err)
 	}

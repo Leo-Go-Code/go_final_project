@@ -31,4 +31,4 @@ jobs:
           go test -run ^TestApp$ ./tests
         env:
           TODO_PORT: 7540
-          TODO_DBFILE: ../pkg/db/scheduler.db
+          TODO_DBFILE: ../scheduler.db
