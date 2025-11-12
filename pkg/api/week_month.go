@@ -9,13 +9,13 @@ import (
 
 func week(now, date, repeat string) (string, error) {
 	//	1.	Преобразуем now в формат time.Time
-	nowTime, err := time.Parse(FORMAT_DATE, now)
+	nowTime, err := time.Parse(FormateDate, now)
 	if err != nil {
 		return "", fmt.Errorf("ошибка парсинга исходной даты now")
 	}
 
 	//	2.	Преобразуем date в формат time.Time
-	dateTime, err := time.Parse(FORMAT_DATE, date)
+	dateTime, err := time.Parse(FormateDate, date)
 	if err != nil {
 		return "", fmt.Errorf("ошибка парсинга исходной даты now")
 	}
@@ -83,7 +83,7 @@ func week(now, date, repeat string) (string, error) {
 
 		for _, day := range weekDaysSlice {
 			if weekDay == day {
-				return workDate.Format(FORMAT_DATE), err
+				return workDate.Format(FormateDate), err
 			}
 		}
 	}
@@ -91,13 +91,13 @@ func week(now, date, repeat string) (string, error) {
 
 func month(now, date, repeat string) (string, error) {
 	//	1.	Преобразуем now в формат time.Time
-	nowTime, err := time.Parse(FORMAT_DATE, now)
+	nowTime, err := time.Parse(FormateDate, now)
 	if err != nil {
 		return "", fmt.Errorf("ошибка парсинга исходной даты now")
 	}
 
 	//	2.	Преобразуем date в формат time.Time
-	dateTime, err := time.Parse(FORMAT_DATE, date)
+	dateTime, err := time.Parse(FormateDate, date)
 	if err != nil {
 		return "", fmt.Errorf("ошибка парсинга исходной даты now")
 	}
@@ -111,11 +111,11 @@ func month(now, date, repeat string) (string, error) {
 
 	//	4.	Определяем день и месяц workDate для отсчёта в формате int
 	var dayInt, monthInt int
-	dayInt, err = strconv.Atoi(workDate.Format(FORMAT_DATE)[6:8])
+	dayInt, err = strconv.Atoi(workDate.Format(FormateDate)[6:8])
 	if err != nil {
 		return "", err
 	}
-	monthInt, err = strconv.Atoi(workDate.Format(FORMAT_DATE)[4:6])
+	monthInt, err = strconv.Atoi(workDate.Format(FormateDate)[4:6])
 	if err != nil {
 		return "", err
 	}
@@ -233,10 +233,11 @@ func month(now, date, repeat string) (string, error) {
 	d := 0
 	for i := 0; i < 5; i++ {
 		//	12.1	Добавляем дни и месяцы
-		monthDatesIntCopy := monthDatesInt
+		monthDatesIntCopy := make([]int, len(monthDatesInt))
+		copy(monthDatesIntCopy, monthDatesInt)
 		d, workDate, err = monthDayAdder(monthDatesIntCopy, monthNumbersInt, monthInt, dayInt, workDate)
 		if err != nil {
-			return workDate.Format(FORMAT_DATE), err
+			return workDate.Format(FormateDate), err
 		}
 
 		//	12.2	Выход из цикла, если получена подходящая дата
@@ -245,18 +246,18 @@ func month(now, date, repeat string) (string, error) {
 		}
 
 		//	12.3	Обновляем значения dayInt, monthInt
-		dayInt, err = strconv.Atoi(workDate.Format(FORMAT_DATE)[6:8])
+		dayInt, err = strconv.Atoi(workDate.Format(FormateDate)[6:8])
 		if err != nil {
 			return "", err
 		}
-		monthInt, err = strconv.Atoi(workDate.Format(FORMAT_DATE)[4:6])
+		monthInt, err = strconv.Atoi(workDate.Format(FormateDate)[4:6])
 		if err != nil {
 			return "", err
 		}
 	}
 
 	//	13.	ВЫВОД
-	return workDate.Format(FORMAT_DATE), err
+	return workDate.Format(FormateDate), err
 }
 
 func monthDayAdder(monthDatesInt, monthNumbersInt []int, monthInt, dayInt int, workDate time.Time) (int, time.Time, error) {
@@ -294,7 +295,7 @@ func monthDayAdder(monthDatesInt, monthNumbersInt []int, monthInt, dayInt int, w
 	}
 
 	//	2.	Определяем полученные месяц и год
-	workDateStr := workDate.Format(FORMAT_DATE)
+	workDateStr := workDate.Format(FormateDate)
 	resMonthStr := workDateStr[4:6]
 	resMonthInt, err := strconv.Atoi(resMonthStr)
 	if err != nil {
@@ -323,6 +324,8 @@ func monthDayAdder(monthDatesInt, monthNumbersInt []int, monthInt, dayInt int, w
 	//	4.	Конвертируем отрицательные даты месяца в положительные
 	for i := 0; i < len(monthDatesInt); i++ {
 		if monthDatesInt[i] < 0 {
+			fmt.Println(maxDay)
+			fmt.Println(monthDatesInt[i])
 			monthDatesInt[i] = maxDay + monthDatesInt[i] + 1
 		}
 	}

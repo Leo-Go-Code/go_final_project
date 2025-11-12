@@ -12,7 +12,6 @@ import (
 func getTask(w http.ResponseWriter, r *http.Request) {
 	//	0.	Переменные для формирования ответа
 	var task db.Task
-	var empty struct{}
 
 	//	1.	Определяем ID задачи
 	url := r.RequestURI
@@ -23,18 +22,17 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 		err := json.NewDecoder(r.Body).Decode(&task)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			writeJSON(w, empty, err)
+			writeJSON(w, map[string]string{"error": fmt.Sprintf("ошибка декодирования запроса: %w", err)})
 			return
 		}
 	}
 
 	//	2.	Получаем из БД структуру задачи по ID
-	task, err = db.GetData(task.ID)
-	// fmt.Println(task)
+	task, err = db.GetTask(&task.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		writeJSON(w, empty, fmt.Errorf("в БД не найдена задача с указанным ID: %v", err))
+		writeJSON(w, map[string]string{"error": fmt.Sprintf("в БД не найдена задача с указанным ID: %w", err)})
 		return
 	}
-	writeJSON(w, task, err)
+	writeJSON(w, task)
 }

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 
 	_ "modernc.org/sqlite"
@@ -14,20 +15,24 @@ type Task struct {
 	Repeat  string `json:"repeat"`
 }
 
-func AddData(task *Task) (int64, error) {
+func AddTask(task *Task) (int64, error) {
 	var id int64
 
 	//	1.	Выполняем запрос в БД: добавляем задачу
-	query := "INSERT INTO scheduler (date, title, comment, repeat) VALUES ($1, $2, $3, $4);"
-	res, err := DB.Exec(query, task.Date, task.Title, task.Comment, task.Repeat)
+	res, err := db.Exec(`INSERT INTO scheduler (date, title, comment, repeat) 
+	VALUES (:date, :title, :comment, :repeat);`,
+		sql.Named("date", task.Date),
+		sql.Named("title", task.Title),
+		sql.Named("comment", task.Comment),
+		sql.Named("repeat", task.Repeat))
 	if err != nil {
-		return 0, fmt.Errorf("ошибка запроса к базе данных: %v", err)
+		return 0, fmt.Errorf("ошибка запроса к базе данных: %w", err)
 	}
 
 	//	2.	Получаем id последней добавленной задачи (проверка err в AddTask)
 	id, err = res.LastInsertId()
 	if err != nil {
-		return 0, fmt.Errorf("ошибка получения id из базы данных: %v", err)
+		return 0, fmt.Errorf("ошибка получения id из базы данных: %w", err)
 	}
 
 	return id, err

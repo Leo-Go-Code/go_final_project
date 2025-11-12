@@ -12,17 +12,24 @@ var result = ""
 var err error
 
 // задаём формат времени YYYYMMDD
-const FORMAT_DATE = "20060102"
+const FormateDate = "20060102"
 
 func nextDate(w http.ResponseWriter, r *http.Request) {
-	//	0.	Обрезаем URL
+	//	0.	Проверка метода Get
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeJSON(w, map[string]string{"error": "ошибка: не верно определён метод запроса для func nextDate()"})
+		return
+	}
+
+	//	1.	Обрезаем URL
 	infAPI := r.URL.RawQuery
 	if infAPI == "" {
 		http.Error(w, "URL Get-запрос не содержит информации для выполнения работы API", http.StatusBadRequest)
 		return
 	}
 
-	//	1.	Получаем данные из URL
+	//	2.	Получаем данные из URL
 	//	можно было попробовать через FormValue()
 	nowRightIndex := strings.Index(infAPI, "&date=")
 	dateRightIndex := strings.Index(infAPI, "&repeat=")
@@ -30,20 +37,17 @@ func nextDate(w http.ResponseWriter, r *http.Request) {
 	date := infAPI[nowRightIndex+len("&date=") : dateRightIndex]
 	repeat := infAPI[dateRightIndex+len("&repeat="):]
 
-	//	2.	Вызов функции taskDate для получения новой даты:
+	//	3.	Вызов функции taskDate для получения новой даты:
 	//	проверка данных, определение добавляемого кол-ва дней, определение новой даты
 	result, err := taskDate(now, date, repeat)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		writeJSON(w, nil, fmt.Errorf(`pkg/api/nextdate.go вернул ошибку: %v`, err))
+		writeJSON(w, map[string]string{"error": fmt.Sprintf("pkg/api/nextdate.go вернул ошибку: %w", err)})
 		return
 	}
 
-	//	3.	Возвращаем результат
-	//	выставляем w.Header()
+	//	4.	Возвращаем результат
 	w.Header().Set("Content-Type", "text/text")
-
-	//	возвращаем содержимое файла в браузер
 	w.Write([]byte(result))
 }
 
@@ -51,15 +55,15 @@ func taskDate(now, date, repeat string) (string, error) {
 	//	0.	Проверка корректности строк now, dstart, repeat
 	err = checkDstartNow(now)
 	if err != nil {
-		return "", fmt.Errorf(`ошибка при проверке корректности строки now: %v`, err)
+		return "", fmt.Errorf("ошибка при проверке корректности строки now: %w", err)
 	}
 	err = checkDstartNow(date)
 	if err != nil {
-		return "", fmt.Errorf(`ошибка при проверке корректности строки date: %v`, err)
+		return "", fmt.Errorf("ошибка при проверке корректности строки date: %w", err)
 	}
 	err = checkRepeat(repeat)
 	if err != nil {
-		return "", fmt.Errorf(`ошибка при проверке корректности строки repeat: %v`, err)
+		return "", fmt.Errorf("ошибка при проверке корректности строки repeat: %w", err)
 	}
 
 	//	1.	Определяем количество прибавляемых дней, месяцев и лет к исходной дате для получения новой даты
@@ -105,7 +109,7 @@ func taskDate(now, date, repeat string) (string, error) {
 		//	1.4	Рассчитываем следующую дату для задачи, делаем проверку result > now и выводим результат для правил "d" и "y"
 		result, err = resultDaysYear(now, date, days, year)
 		if err != nil {
-			return "", fmt.Errorf("ошибка работы функции resultDaysYear: %v", err)
+			return "", fmt.Errorf("ошибка работы функции resultDaysYear: %w", err)
 		}
 		return result, err
 	}
@@ -113,11 +117,11 @@ func taskDate(now, date, repeat string) (string, error) {
 
 func resultDaysYear(now, dstart string, days, year int) (string, error) {
 	//	0.	Преобразуем now, dstart в формат time.Time
-	nowTime, err := time.Parse(FORMAT_DATE, now)
+	nowTime, err := time.Parse(FormateDate, now)
 	if err != nil {
 		return "", fmt.Errorf("ошибка парсинга исходной даты now")
 	}
-	dateStart, err := time.Parse(FORMAT_DATE, dstart)
+	dateStart, err := time.Parse(FormateDate, dstart)
 	if err != nil {
 		return "", fmt.Errorf("ошибка парсинга исходной даты dstart")
 	}
@@ -132,5 +136,5 @@ func resultDaysYear(now, dstart string, days, year int) (string, error) {
 		}
 	}
 
-	return workDate.Format(FORMAT_DATE), err
+	return workDate.Format(FormateDate), err
 }

@@ -1,22 +1,27 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 )
 
-func UpdateData(newTask Task) error {
+func UpdateTask(newTask *Task) error {
 
 	//	1.	Делаем запрос в БД
-	query := `UPDATE scheduler SET date = $1, title = $2, comment = $3, repeat = $4 WHERE id = $5;`
-	res, err := DB.Exec(query, newTask.Date, newTask.Title, newTask.Comment, newTask.Repeat, newTask.ID)
+	res, err := db.Exec(`UPDATE scheduler SET date = :date, title = :title, comment = :comment, repeat = :repeat WHERE id = :id;`,
+		sql.Named("date", newTask.Date),
+		sql.Named("title", newTask.Title),
+		sql.Named("comment", newTask.Comment),
+		sql.Named("repeat", newTask.Repeat),
+		sql.Named("id", newTask.ID))
 	if err != nil {
-		return fmt.Errorf("ошибка запроса к базе данных: %v", err)
+		return fmt.Errorf("ошибка запроса к базе данных: %w", err)
 	}
 
 	//	2.	Определяем кол-во изменёных записей
 	count, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("НЕ корректное кол-во изменённых задач в базе данных: %v", err)
+		return fmt.Errorf("НЕ корректное кол-во изменённых задач в базе данных: %w", err)
 	}
 	if count == 0 {
 		return fmt.Errorf("НЕ корректный id для обновления данных задачи")

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"example.com/m/pkg/db"
@@ -12,7 +13,6 @@ import (
 func deleteTask(w http.ResponseWriter, r *http.Request) {
 	//	0.	Переменные для формирования ответа
 	var task db.Task
-	var empty struct{}
 
 	//	1.	Определяем ID задачи
 	url := r.RequestURI
@@ -23,7 +23,7 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 		err := json.NewDecoder(r.Body).Decode(&task)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			writeJSON(w, empty, err)
+			writeJSON(w, map[string]string{"error": fmt.Sprintf("ошибка декодирования запроса: %w", err)})
 			return
 		}
 	}
@@ -31,30 +31,22 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 	//	2.	Проверка ID
 	if task.ID == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		writeJSON(w, empty, fmt.Errorf("в запросе НЕ был получен ID"))
+		writeJSON(w, map[string]string{"error": "в запросе НЕ был получен ID"})
 		return
 	}
-	numbers := "0123456789"
-	var n int
-	for i := 0; i < len(numbers); i++ {
-		for j := 0; j < len(task.ID); j++ {
-			if task.ID[j] == numbers[i] {
-				n++
-			}
-		}
-	}
-	if len(task.ID) != n {
+	_, err := strconv.Atoi(task.ID)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		writeJSON(w, empty, fmt.Errorf("получено не корректное значение ID"))
+		writeJSON(w, map[string]string{"error": "получено не корректное значение ID"})
 		return
 	}
 
 	//	3.	Удаляем из БД задачу по ID
-	err = db.DeleteData(task.ID)
+	err = db.DeleteTask(&task.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		writeJSON(w, empty, fmt.Errorf("в БД не найдена задача с указанным ID: %v", err))
+		writeJSON(w, map[string]string{"error": fmt.Sprintf("в БД не найдена задача с указанным ID: %w", err)})
 		return
 	}
-	writeJSON(w, empty, err)
+	writeJSON(w, nil)
 }

@@ -17,7 +17,7 @@ const SCHEMA = `CREATE TABLE IF NOT EXISTS scheduler (
 );
 CREATE INDEX IF NOT EXISTS date_id ON scheduler (date);`
 
-var DB *sql.DB
+var db *sql.DB
 
 func InitDB(infDBfile string) (*sql.DB, error) {
 	var err error
@@ -28,16 +28,16 @@ func InitDB(infDBfile string) (*sql.DB, error) {
 	}
 
 	//	2.	Открытие таблицы
-	DB, err = sql.Open("sqlite", infDBfile)
+	db, err = sql.Open("sqlite", infDBfile)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка: таблица не открылась: %v", err)
+		return nil, fmt.Errorf("ошибка: таблица не открылась: %w", err)
 	}
 
 	//	3.	Создание таблицы, если она отсутствует в директории
-	_, err = DB.Exec(SCHEMA)
+	_, err = db.Exec(SCHEMA)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка создания таблицы: %v", err)
+		return nil, fmt.Errorf("ошибка создания таблицы: %w", err)
 	}
 
-	return DB, err
+	return db, err
 }

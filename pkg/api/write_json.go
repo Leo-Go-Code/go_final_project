@@ -2,23 +2,24 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
-func writeJSON(w http.ResponseWriter, data interface{}, err error) {
+func writeJSON(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-	//	1.	Обрабатываем ошибку
-	if err != nil {
-		errorResp := map[string]string{"error": fmt.Sprintf("ошибка обработки запроса: %v", err)}
-		errorJSON, _ := json.Marshal(errorResp)
-		w.Write(errorJSON)
+	if data == nil {
+		w.Write([]byte(`{}`))
 		return
 	}
 
-	//	2.	Возвращаем ответ успешной обработки запроса
-	w.WriteHeader(http.StatusOK)
-	result, _ := json.Marshal(data)
+	result, err := json.Marshal(data)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error": "ошибка формирования ответа json"}`))
+		return
+	}
+
 	w.Write(result)
 }

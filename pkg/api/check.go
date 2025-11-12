@@ -2,63 +2,27 @@ package api
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 )
 
 // Проверка корректности строк now и dstart
 func checkDstartNow(str string) error {
-	//	0.	Инициируем переменную для проверки
-	numbersBytes := []byte("0123456789")
-
 	//	1. Проверка количества символов
 	if len(str) != 8 {
 		return fmt.Errorf("строка str задана некорректно: количество символов НЕ равно 8")
 	}
 
 	//	2. Проверка самих символов строки (должны быть только цифры)
-	for i := 0; i < len(str); i++ {
-		symbol := false
-		for j := 0; j < len(numbersBytes); j++ {
-			if str[i] == numbersBytes[j] {
-				symbol = true
-				break
-			}
-		}
-		if !symbol {
-			return fmt.Errorf("строка str задана некорректно: строка содержит НЕ только цифры")
+	for _, letter := range str {
+		if letter < '0' || letter > '9' {
+			return fmt.Errorf("строка str задана некорректно: строка содержит не только цифры, что недопустимо")
 		}
 	}
 
-	//	3. Проверка корректности значения дня
-	dayStr := str[6:8]
-	dayInt, err := strconv.Atoi(dayStr)
-	if err != nil || dayInt < 1 || dayInt > 31 {
-		return fmt.Errorf("строка str задана некорректно: недопустимое кол-во дней в месяце")
-	}
-
-	//	4. Проверка корректности значения месяца
-	monthStr := str[4:6]
-	monthInt, err := strconv.Atoi(monthStr)
-	if err != nil || monthInt < 1 || monthInt > 12 {
-		return fmt.Errorf("строка str задана некорректно: недопустимое кол-во месяцев в году")
-	}
-
-	//	5. Проверка месяцев по 30 дней
-	if (monthInt == 4 || monthInt == 6 || monthInt == 9 || monthInt == 11) && dayInt > 30 {
-		return fmt.Errorf("строка str задана некорректно: недопустимое кол-во дней в 30ти-дневных месяцах")
-
-	}
-
-	// 6. Проверка февраля (на весокосный год тоже проверь)
-	if monthInt == 2 && dayInt > 29 {
-		return fmt.Errorf("строка str задана некорректно: недопустимое кол-во дней в феврале")
-	}
-
-	//	7. Дополнительная проверка через Parse
-	_, err = time.Parse(FORMAT_DATE, str)
+	//	3. Проверка полученной даты через time.Parse
+	_, err := time.Parse(FormateDate, str)
 	if err != nil {
-		return fmt.Errorf("строка str задана некорректно: она не парсится под формат времени 20060102")
+		return fmt.Errorf("строка str задана некорректно: %w", err)
 	}
 
 	return err
@@ -72,7 +36,7 @@ func checkRepeat(repeat string) error {
 
 	//	1. Проверка наличия значения
 	if len(repeat) == 0 {
-		return fmt.Errorf(`строка repeat задана некорректно: длина строки НЕ может быть равна 0`)
+		return fmt.Errorf("строка repeat задана некорректно: длина строки НЕ может быть равна 0")
 	}
 
 	//	2. Проверка значения y
@@ -109,8 +73,8 @@ func checkRepeat(repeat string) error {
 	}
 
 	//	5. Проверка количества символов строки
-	if len(repeat) > 20 {
-		return fmt.Errorf("строка repeat задана некорректно: строка НЕ может иметь длину больше 20 символов")
+	if len(repeat) > 100 {
+		return fmt.Errorf("строка repeat задана некорректно: строка НЕ может иметь длину больше 100 символов")
 	}
 
 	//	6. Проверка наличия пробела между буквами и цифрами для "d", "w", "m"

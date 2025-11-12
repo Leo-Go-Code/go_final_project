@@ -1,20 +1,21 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 
 	_ "modernc.org/sqlite"
 )
 
-func GetData(id string) (Task, error) {
+func GetTask(id *string) (Task, error) {
 	//	1.	Переменные структуры Task для записи и возвращения информации из ДБ
 	var task Task
 	var empty Task
 
 	//	2.	Получаем данные по id и проверяем их
-	err := DB.QueryRow("SELECT id, date, title, comment, repeat FROM scheduler WHERE id = ?;", id).Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+	err := db.QueryRow("SELECT id, date, title, comment, repeat FROM scheduler WHERE id = :id;", sql.Named("id", id)).Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 	if err != nil {
-		return empty, fmt.Errorf(`ошибка выполнения GET запроса в БД: %v`, err)
+		return empty, fmt.Errorf("ошибка выполнения GET запроса в БД: %w", err)
 	}
 
 	//	3.	Возвращаем результат
